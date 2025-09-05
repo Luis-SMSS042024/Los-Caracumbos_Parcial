@@ -15,7 +15,8 @@ class Producto:
 class ItemVenta:
     producto_id: str
     cantidad: int
-    precio_unitario: float
+    precio_unitario: float  # precio del producto al momento de la venta
+
     @property
     def subtotal(self) -> float:
         return round(self.cantidad * self.precio_unitario, 2)
@@ -24,6 +25,7 @@ class ItemVenta:
 class Venta:
     fecha: datetime
     items: List[ItemVenta]
+
     @property
     def total(self) -> float:
         return round(sum(it.subtotal for it in self.items), 2)
