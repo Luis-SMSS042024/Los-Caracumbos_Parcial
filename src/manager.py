@@ -1,3 +1,4 @@
+# src/manager.py
 from __future__ import annotations
 from typing import Dict, List, Tuple
 from datetime import datetime
@@ -12,26 +13,49 @@ class GestorVentas:
         self.ventas: List[Venta] = []
         self._venta_seq: int = 1
 
+    # ---- Productos ----
     def agregar_producto(self, producto: Producto) -> None:
-        raise NotImplementedError
+        if producto.id in self.productos:
+            raise ValueError(f"Ya existe un producto con id '{producto.id}'.")
+        self.productos[producto.id] = producto
 
     def listar_productos(self) -> List[Producto]:
-        raise NotImplementedError
+        return sorted(self.productos.values(), key=lambda p: p.nombre.lower())
 
+    # ---- Ventas ----
     def registrar_venta(self, items_solicitados: List[Tuple[str, int]]) -> Venta:
-        raise NotImplementedError
+        """
+        items_solicitados: lista de (producto_id, cantidad)
+        - Verifica existencia y stock
+        - Descuenta stock
+        - Crea venta con precios “congelados”
+        """
+        if not items_solicitados:
+            raise ValueError("Debe registrar al menos un item.")
+
+        # Validaciones previas sin mutar estado
+        for prod_id, cant in items_solicitados:
+            if prod_id not in self.productos:
+                raise ValueError(f"Producto '{prod_id}' no existe.")
+            if cant <= 0:
+                raise ValueError("La cantidad debe ser >= 1.")
+            if self.productos[prod_id].stock < cant:
+                raise ValueError(
+                    f"Stock insuficiente para '{prod_id}'. "
+                    f"Disponible: {self.productos[prod_id].stock}, solicitado: {cant}"
+                )
+
+        # Construcción de items y descuento de stock
+        items: List[ItemVenta] = []
+        for prod_id, cant in items_solicitados:
+            prod = self.productos[prod_id]
+            items.append(ItemVenta(producto_id=prod.id, cantidad=cant, precio_unitario=prod.precio))
+            prod.stock -= cant  # descontar stock
+
+        venta = Venta(fecha=datetime.now(), items=items)
+        self.ventas.append(venta)
+        self._venta_seq += 1
+        return venta
 
     def listar_ventas(self) -> List[Venta]:
-        raise NotImplementedError
-
-    def cargar_productos_desde_csv(self, path: str) -> int:
-        raise NotImplementedError
-
-    def guardar_productos_csv(self, path: str) -> int:
-        raise NotImplementedError
-
-    def exportar_ventas_json(self, path: str) -> int:
-        raise NotImplementedError
-
-    def resumen_por_producto(self) -> List[ResumenProducto]:
-        raise NotImplementedError
+        return list(self.ventas)

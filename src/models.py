@@ -15,7 +15,7 @@ class Producto:
 class ItemVenta:
     producto_id: str
     cantidad: int
-    precio_unitario: float  # se “congela” al momento de la venta
+    precio_unitario: float  
 
     @property
     def subtotal(self) -> float:
