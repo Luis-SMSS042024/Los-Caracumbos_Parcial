@@ -1,11 +1,14 @@
 # src/main.py
 from __future__ import annotations
+
 from typing import Optional, Tuple, List
 from .manager import GestorVentas
 from .models import Producto
 
+
 def _input_str(msg: str) -> str:
     return input(msg).strip()
+
 
 def _input_int(msg: str, minimo: Optional[int] = None) -> int:
     while True:
@@ -18,16 +21,19 @@ def _input_int(msg: str, minimo: Optional[int] = None) -> int:
         except ValueError:
             print("Ingrese un número entero válido.")
 
+
 def _input_float(msg: str, minimo: Optional[float] = None) -> float:
     while True:
         try:
-            val = float(input(msg).strip())
+            raw = input(msg).strip().replace(",", ".")  # permite 11,50 o 11.50
+            val = float(raw)
             if minimo is not None and val < minimo:
                 print(f"Debe ser >= {minimo}.")
                 continue
             return val
         except ValueError:
             print("Ingrese un número válido.")
+
 
 def _menu() -> None:
     print("\n=== Mercado Ventas ===")
@@ -41,11 +47,14 @@ def _menu() -> None:
     print("8) Exportar ventas a JSON")
     print("0) Salir")
 
+
 def main() -> None:
     g = GestorVentas()
+
     while True:
         _menu()
-        opcion = _input_str("Opción: ")
+        opcion = _input_str("Opción: ").lower()
+
         try:
             if opcion == "1":
                 path = _input_str("Ruta CSV (ej: data/productos.csv): ")
@@ -63,15 +72,16 @@ def main() -> None:
                 precio = _input_float("Precio: ", minimo=0.0)
                 stock = _input_int("Stock: ", minimo=0)
                 g.agregar_producto(Producto(id=pid, nombre=nombre, precio=precio, stock=stock))
-                print("Producto agregado.")
+                print("✅ Producto agregado.")
 
             elif opcion == "4":
                 productos = g.listar_productos()
                 if not productos:
                     print("No hay productos.")
                 else:
+                    print("\nID | Nombre | Precio | Stock")
                     for p in productos:
-                        print(f"- {p.id} | {p.nombre} | ${p.precio} | stock: {p.stock}")
+                        print(f"{p.id} | {p.nombre} | ${p.precio} | {p.stock}")
 
             elif opcion == "5":
                 print("Ingrese items de la venta. Deje ID vacío para finalizar.")
@@ -86,7 +96,7 @@ def main() -> None:
                     print("Venta cancelada (sin items).")
                 else:
                     v = g.registrar_venta(items)
-                    print(f"Venta registrada. Total: ${v.total}")
+                    print(f"✅ Venta registrada. Total: ${v.total}")
 
             elif opcion == "6":
                 ventas = g.listar_ventas()
@@ -101,8 +111,9 @@ def main() -> None:
                 if not resumen:
                     print("Sin datos para resumen.")
                 else:
+                    print("\nproducto_id | cantidad_total | ingresos")
                     for r in resumen:
-                        print(f"{r.producto_id}: cantidad={r.cantidad_total}, ingresos=${r.ingresos}")
+                        print(f"{r.producto_id} | {r.cantidad_total} | ${r.ingresos}")
 
             elif opcion == "8":
                 path = _input_str("Ruta JSON destino (ej: data/ventas.json): ")
@@ -116,8 +127,14 @@ def main() -> None:
             else:
                 print("Opción inválida.")
 
+        except KeyboardInterrupt:
+            print("\nOperación cancelada por el usuario.")
         except Exception as e:
-            print(f"Error: {e}")
+            # 👇 Esto asegura que siempre veas el tipo y el detalle del error
+            import traceback, sys
+            print(f"\n❌ Error: {type(e).__name__}: {e}")
+            traceback.print_exc(file=sys.stdout)
+
 
 if __name__ == "__main__":
     main()
